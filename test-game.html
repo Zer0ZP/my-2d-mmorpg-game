@@ -3,101 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ระบบทดสอบเกม 2D MMORPG</title>
+    <title>เกม 2D MMORPG ฉบับเต็ม (Beta v1.0)</title>
     <style>
-        body { margin: 0; background-color: #111; color: #fff; font-family: sans-serif; text-align: center; user-select: none; }
-        #game-screen { width: 100vw; height: 50vh; background: linear-gradient(to bottom, #1a252f, #000); position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; border-bottom: 4px solid #d4af37; box-sizing: border-box; }
-        #hud { position: absolute; top: 10px; left: 10px; text-align: left; font-size: 14px; background: rgba(0,0,0,0.6); padding: 8px; border-radius: 5px; }
-        #mobile-controls { width: 100vw; height: 50vh; background-color: #222; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; padding: 10px; box-sizing: border-box; }
-        .btn { padding: 15px 25px; font-size: 16px; font-weight: bold; background-color: #d4af37; color: black; border: none; border-radius: 8px; cursor: pointer; width: 80%; max-width: 300px; }
+        body { margin: 0; padding: 0; background-color: #111; color: #fff; font-family: sans-serif; text-align: center; user-select: none; }
+        
+        /* หน้าจอแสดงผลเกม */
+        #game-screen { width: 100vw; height: 45vh; background: linear-gradient(to bottom, #111116, #22222b); position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; border-bottom: 4px solid #d4af37; box-sizing: border-box; }
+        
+        /* ส่วนแสดงสถานะตัวละคร */
+        #hud { position: absolute; top: 10px; left: 10px; text-align: left; font-size: 13px; background: rgba(0,0,0,0.75); padding: 10px; border-radius: 6px; border: 1px solid #444; }
+        
+        /* พื้นที่แสดงมอนสเตอร์พิกเซล */
+        #monster-zone { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 40px; }
+        #monster-img { width: 80px; height: 80px; image-rendering: pixelated; animation: bounce 0.6s infinite alternate; }
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-8px); } }
+        #monster-hp-bar { width: 100px; height: 8px; background-color: #444; border-radius: 4px; margin-top: 5px; overflow: hidden; }
+        #monster-hp-fill { width: 100%; height: 100%; background-color: #ff3333; transition: width 0.1s; }
+
+        /* ส่วนแสดงผลข้อมูลกระเป๋าใส่อุปกรณ์ (Inventory) */
+        #inventory-box { width: 100vw; height: 15vh; background-color: #15151a; border-bottom: 2px solid #333; box-sizing: border-box; padding: 5px; text-align: left; overflow-y: auto; }
+        .inventory-title { font-size: 12px; color: #aaa; font-weight: bold; margin-bottom: 3px; border-bottom: 1px solid #333; padding-bottom: 2px; }
+        #inventory-list { display: flex; flex-wrap: wrap; gap: 5px; font-size: 11px; }
+        .item-slot { background-color: #252530; border: 1px solid #555; padding: 3px 6px; border-radius: 4px; }
+        .item-legendary { color: #ffae00; border-color: #ffae00; font-weight: bold; }
+
+        /* ส่วนควบคุมบนหน้าจอมือถือ */
+        #mobile-controls { width: 100vw; height: 40vh; background-color: #1f1f26; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 12px; padding: 10px; box-sizing: border-box; }
+        .btn-group { display: flex; width: 90%; max-width: 360px; gap: 10px; }
+        .btn { flex: 1; padding: 14px; font-size: 15px; font-weight: bold; background-color: #d4af37; color: black; border: none; border-radius: 8px; cursor: pointer; }
         .btn:active { background-color: #fff; }
+        .btn-action { background-color: #3498db; color: white; }
+        .btn-action:active { background-color: #5dade2; }
         .btn-danger { background-color: #c0392b; color: white; }
         .btn-danger:active { background-color: #e74c3c; }
-        #log { margin-top: 10px; color: #00ff00; font-weight: bold; font-size: 18px; padding: 0 10px; }
+        #log { color: #00ff00; font-weight: bold; font-size: 15px; height: 20px; }
     </style>
 </head>
 <body>
 
+    <!-- 1. หน้าจอเกมหลัก -->
     <div id="game-screen">
         <div id="hud">
             <div id="p-name">ผู้เล่น: ตามี</div>
-            <div id="p-sur">นามสกุล: (ยังไม่มี)</div>
+            <div id="p-sur">นามสกุล: ดวงดี</div>
             <div id="p-level">Lv. 1 (Max 100)</div>
             <div id="p-gold">Gold: 1,000</div>
         </div>
-        <div id="log">🎮 ยินดีต้อนรับสู่ตัวเทสระบบเกม!</div>
+        
+        <!-- โซนมอนสเตอร์พิกเซล -->
+        <div id="monster-zone">
+            <img id="monster-img" src="[attachment_0](attachment)" alt="Slime">
+            <div style="font-size: 14px; font-weight: bold; margin-top: 5px;">Green Slime (Lv.1)</div>
+            <div id="monster-hp-bar"><div id="monster-hp-fill"></div></div>
+        </div>
     </div>
 
+    <!-- 2. ระบบกระเป๋าใส่อุปกรณ์ (Inventory) ตามที่ขอเพิ่ม -->
+    <div id="inventory-box">
+        <div class="inventory-title">🎒 กระเป๋าใส่อุปกรณ์และไอเทม:</div>
+        <div id="inventory-list">
+            <!-- รายการไอเทมจะถูกใส่เข้ามาด้วย JavaScript -->
+        </div>
+    </div>
+
+    <!-- 3. คอนโทรลเลอร์ควบคุมสำหรับมือถือ -->
     <div id="mobile-controls">
-        <!-- ปุ่มทดสอบระบบเปลี่ยนนามสกุล -->
-        <button class="btn" onclick="changeLastName()">ศาลากลาง: เปลี่ยนนามสกุลตัวละคร</button>
+        <div id="log">🎮 เข้าสู่เกมสำเร็จ!</div>
         
-        <!-- ปุ่มทดสอบระบบต่อสู้ -->
-        <button class="btn" onclick="attackMonster()">⚔️ โจมตีมอนสเตอร์ (เก็บเลเวล)</button>
-        
-        <!-- ปุ่มทดสอบระบบตาย/ของตก -->
-        <button class="btn btn-danger" onclick="simulateDeath()">☠️ ทดสอบตัวละครตาย (สุ่มของตก)</button>
+        <div class="btn-group">
+            <button class="btn btn-action" onclick="attackMonster()">⚔️ โจมตีมอนสเตอร์</button>
+            <button class="btn" onclick="changeLastName()">📝 เปลี่ยนนามสกุล</button>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-danger" onclick="simulateDeath()" style="width: 100%;">☠️ ทดสอบตัวละครตาย (สุ่มของตก)</button>
+        </div>
     </div>
 
     <script>
-        // จำลองข้อมูลตัวละคร
+        // ข้อมูลผู้เล่นและกระเป๋าไอเทมเริ่มต้น
         let player = {
             name: "ตามี",
             lastName: "ดวงดี",
             level: 1,
             gold: 1000,
-            inventory: ["ดาบไม้", "เสื้อผ้าเก่า", "ยาโพชั่น", "ดาบมังกรทลายฟ้า (Legendary)"]
+            inventory: ["ดาบไม้โค้ง", "ชุดผ้าเก่า", "โพชั่นฟื้นเลือด", "มีดล่าสัตว์", "ดาบมังกรทลายฟ้า (Legendary)"]
         };
 
-        // อัปเดตหน้าจอแรกเริ่ม
+        let monsterHp = 100;
+
+        // ฟังก์ชันวาดไอเทมในกระเป๋า (Inventory) ขึ้นหน้าจอ
+        function updateInventoryUI() {
+            const listContainer = document.getElementById('inventory-list');
+            listContainer.innerHTML = ""; // ล้างค่าเก่า
+            
+            player.inventory.forEach(item => {
+                const slot = document.createElement('div');
+                slot.classList.add('item-slot');
+                
+                // ถ้าเป็นของระดับตำนาน ให้ใส่สีพิเศษตามกฏ
+                if(item.includes("(Legendary)")) {
+                    slot.classList.add('item-legendary');
+                }
+                
+                slot.innerText = item;
+                listContainer.appendChild(slot);
+            });
+        }
+
+        // อัปเดตการแสดงผลตั้งต้น
         document.getElementById('p-sur').innerText = "นามสกุล: " + player.lastName;
+        updateInventoryUI();
 
         // 1. ระบบเปลี่ยนนามสกุล
         function changeLastName() {
-            let newSurname = prompt("กรอกนามสกุลใหม่ที่ต้องการเปลี่ยน:");
+            let newSurname = prompt("กรอกนามสกุลใหม่ที่ต้องการเปลี่ยนสำหรับการเดินทางครั้งนี้:");
             if (newSurname && newSurname.trim() !== "") {
                 player.lastName = newSurname.trim();
                 document.getElementById('p-sur').innerText = "นามสกุล: " + player.lastName;
-                document.getElementById('log').innerText = "📝 เปลี่ยนนามสกุลสำเร็จเป็น: " + player.lastName;
+                document.getElementById('log').innerText = "📝 เปลี่ยนนามสกุลสำเร็จแล้ว!";
             }
         }
 
-        // 2. ระบบโจมตี/เก็บเลเวล
+        // 2. ระบบโจมตีมอนสเตอร์พิกเซลและเก็บเลเวล
         function attackMonster() {
-            if(player.level >= 100) {
-                document.getElementById('log').innerText = "✨ เลเวลของคุณตันที่ 100 แล้ว!";
-                return;
+            monsterHp -= 35;
+            document.getElementById('log').innerText = "💥 โจมตี Slime ดาเมจ 35!";
+            
+            if(monsterHp <= 0) {
+                monsterHp = 100; // เกิดใหม่
+                document.getElementById('log').innerText = "✨ กำจัด Slime ได้! ได้รับเลเวลและทอง";
+                
+                if(player.level < 100) {
+                    player.level += 1;
+                    player.gold += 120;
+                    document.getElementById('p-level').innerText = "Lv. " + player.level + " (Max 100)";
+                    document.getElementById('p-gold').innerText = "Gold: " + player.gold;
+                } else {
+                    document.getElementById('log').innerText = "✨ เลเวลของคุณตันที่ 100 แล้ว!";
+                }
             }
-            player.level += 1;
-            player.gold += 150;
-            document.getElementById('p-level').innerText = "Lv. " + player.level + " (Max 100)";
-            document.getElementById('p-gold').innerText = "Gold: " + player.gold;
-            document.getElementById('log').innerText = "⚔️ โจมตีสำเร็จ! เลเวลอัปเป็น " + player.level;
+            
+            // อัปเดตหลอดเลือดมอนสเตอร์
+            document.getElementById('monster-hp-fill').style.width = monsterHp + "%";
         }
 
         // 3. ระบบตัวละครตาย (เสีย Gold 5% และสุ่มของตก ห้ามโดนไอเทม Legend)
         function simulateDeath() {
-            // เสียทอง 5%
             let lostGold = Math.floor(player.gold * 0.05);
             player.gold -= lostGold;
             document.getElementById('p-gold').innerText = "Gold: " + player.gold;
 
-            // สุ่มของตก
             if (player.inventory.length > 0) {
                 let randomIndex = Math.floor(Math.random() * player.inventory.length);
                 let selectedItem = player.inventory[randomIndex];
 
-                // ตรวจเงื่อนไขป้องกันไอเทมระดับตำนานตกพื้น
+                // ตรวจสอบเงื่อนไขไอเทมระดับตำนานห้ามตก
                 if (selectedItem.includes("(Legendary)")) {
-                    document.getElementById('log').innerText = "☠️ คุณตาย! เสียเงิน " + lostGold + " Gold แต่ระบบคุ้มครองไอเทมระดับ Legendary ของเลยไม่ตก!";
+                    document.getElementById('log').innerText = "☠️ ตาย! เสียเงิน " + lostGold + " ทอง [ระบบคุ้มครองไอเทม Legendary!]";
                 } else {
                     player.inventory.splice(randomIndex, 1); // ลบออกจากกระเป๋า
-                    document.getElementById('log').innerText = "☠️ คุณตาย! เสียเงิน " + lostGold + " Gold และไอเทม [" + selectedItem + "] ตกพื้นหายไปแล้ว!";
+                    document.getElementById('log').innerText = "☠️ ตาย! เสียเงิน " + lostGold + " ทอง และไอเทม [" + selectedItem + "] ตกพื้น!";
+                    updateInventoryUI(); // อัปเดตกระเป๋าหน้าจอ
                 }
             } else {
-                document.getElementById('log').innerText = "☠️ คุณตาย! เสียเงิน " + lostGold + " Gold (กระเป๋าว่างไม่มีของตก)";
+                document.getElementById('log').innerText = "☠️ ตาย! เสียเงิน " + lostGold + " ทอง (กระเป๋าว่างไม่มีของให้ตก)";
             }
         }
     </script>
 </body>
+</html>
 </html>
